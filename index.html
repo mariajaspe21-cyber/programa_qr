@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Sistema de Asistencia QR Profesional</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen font-sans p-6">
+
+    <div class="max-w-5xl mx-auto space-y-6">
+        
+        <div class="flex justify-between items-center bg-slate-800 p-6 rounded-2xl border border-slate-700/60 shadow-xl">
+            <div>
+                <h1 class="text-2xl font-black tracking-tight text-white">Sistema de Acceso y Asistencia QR</h1>
+                <p class="text-xs text-slate-400 mt-0.5">Estructura limpia para el registro de datos, generación y reportes ópticos en tiempo real</p>
+            </div>
+            <a href="/limpiar" class="text-xs bg-red-950/40 hover:bg-red-900/40 text-red-400 font-bold px-4 py-2 rounded-xl border border-red-500/20 transition-colors">Reiniciar Datos</a>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700/50 space-y-4 shadow-lg flex flex-col justify-between">
+                <div>
+                    <div class="border-b border-slate-700 pb-2 mb-4">
+                        <span class="text-[10px] uppercase tracking-wider font-extrabold bg-blue-600/20 text-blue-400 px-2 py-0.5 rounded">Perfil 1</span>
+                        <h2 class="text-base font-bold text-white mt-1">Módulo del Administrador (Registro)</h2>
+                    </div>
+                    
+                    <form action="/" method="POST" class="space-y-3">
+                        <div>
+                            <label class="text-[11px] text-slate-400 uppercase font-bold tracking-wider">Nombre Completo</label>
+                            <input type="text" name="nombre" placeholder="Ej: Carlos Mendoza" required class="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white outline-none focus:border-blue-500">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-[11px] text-slate-400 uppercase font-bold tracking-wider">ID de Usuario</label>
+                                <input type="text" name="id_usuario" placeholder="Ej: carl01" required class="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white outline-none focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="text-[11px] text-slate-400 uppercase font-bold tracking-wider">Número de Cédula</label>
+                                <input type="text" name="cedula" placeholder="Ej: V-25441332" required class="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white outline-none focus:border-blue-500">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-[11px] text-slate-400 uppercase font-bold tracking-wider">Número de Teléfono</label>
+                            <input type="tel" name="telefono" placeholder="Ej: +58 424-1234567" required class="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white outline-none focus:border-blue-500">
+                        </div>
+                        <button type="submit" name="btn_generar_qr" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 rounded-xl text-xs transition-colors cursor-pointer">
+                            Procesar Datos e Imprimir QR
+                        </button>
+                    </form>
+                </div>
+
+                {% if qr_code %}
+                    <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-700/40 flex flex-col items-center justify-center max-w-xs mx-auto mt-4 w-full">
+                        <div class="p-3 bg-white rounded-lg shadow-md">
+                            <img id="qrImage" src="data:image/png;base64,{{ qr_code }}" class="w-32 h-32">
+                        </div>
+                        <p class="text-[10px] text-emerald-400 mt-2 text-center font-semibold font-mono mb-2">QR listo para {{ ultima_persona.nombre }}</p>
+                        
+                        <a href="data:image/png;base64,{{ qr_code }}" download="QR_{{ ultima_persona.id }}.png" class="inline-flex items-center gap-1 text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg border border-slate-700 font-bold tracking-wide transition-colors">
+                            💾 Descargar Código QR
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700/50 space-y-4 shadow-lg flex flex-col justify-between">
+                <div>
+                    <div class="border-b border-slate-700 pb-2 mb-4">
+                        <span class="text-[10px] uppercase tracking-wider font-extrabold bg-emerald-600/20 text-emerald-400 px-2 py-0.5 rounded">Perfil 2</span>
+                        <h2 class="text-base font-bold text-white mt-1">Módulo del Lector (Presentar QR)</h2>
+                    </div>
+                    
+                    <p class="text-xs text-slate-400 leading-relaxed">Selecciona a una de las personas dadas de alta en el sistema para simular la lectura de su código QR frente al sensor óptico perimetral:</p>
+
+                    <form action="/" method="POST" class="space-y-4 mt-4">
+                        <select name="persona_selected" class="hidden"></select>
+                        <select name="persona_seleccionada" class="w-full p-3 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white outline-none focus:border-emerald-500">
+                            {% if not personas %}
+                                <option disabled selected>Primero registra datos en el Administrador (Izquierda)</option>
+                            {% endif %}
+                            {% for p in personas %}
+                                <option value="{{ loop.index0 }}">{{ p.nombre }} [Cédula: {{ p.cedula }}]</option>
+                            {% endfor %}
+                        </select>
+
+                        <button type="submit" name="btn_reportar_asistencia" {% if not personas %}disabled class="w-full bg-slate-700 text-slate-500 py-3 rounded-xl text-xs font-bold cursor-not-allowed"{% else %}class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl text-xs font-bold transition-transform active:scale-98 cursor-pointer shadow-lg shadow-emerald-950/40"{% endif %}>
+                            📷 Escanear y Transmitir Asistencia QR
+                        </button>
+                    </form>
+                </div>
+
+                <div class="bg-slate-900/30 p-4 rounded-xl border border-slate-700/30 text-[11px] text-slate-400 italic">
+                    * Nota técnica: Al hacer clic, el backend decodifica la cadena estructurada y añade la fecha y hora del servidor automáticamente.
+                </div>
+            </div>
+
+        </div>
+
+        <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700/50 space-y-4 shadow-lg">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center border-b border-slate-700 pb-3 gap-2">
+                <div>
+                    <span class="text-[10px] uppercase tracking-wider font-extrabold bg-amber-600/20 text-amber-400 px-2 py-0.5 rounded">Perfil 3</span>
+                    <h2 class="text-base font-bold text-white mt-1">Módulo del Supervisor (Auditoría Centralizada)</h2>
+                </div>
+                
+                <div class="bg-slate-900 px-4 py-2 rounded-xl border border-slate-700 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span class="text-xs text-slate-400 font-medium">Registros totales hoy: <strong class="text-white font-mono text-sm ml-1">{{ total_asistencias }}</strong></span>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto rounded-xl border border-slate-700/60">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-700/80 text-slate-200 uppercase font-bold">
+                        <tr>
+                            <th class="p-3">ID Usuario</th>
+                            <th class="p-3">Nombre Completo</th>
+                            <th class="p-3">Cédula de Identidad</th>
+                            <th class="p-3">Fecha</th>
+                            <th class="p-3">Hora de Captura</th>
+                            <th class="p-3 text-right">Verificación</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-700/40 bg-slate-900/30">
+                        {% if not reportes %}
+                            <tr>
+                                <td colspan="6" class="p-6 text-center text-slate-500 italic">Sistema en espera de escaneos ópticos...</td>
+                            </tr>
+                        {% endif %}
+                        {% for r in reportes %}
+                            <tr class="hover:bg-slate-700/20 transition-colors">
+                                <td class="p-3 font-mono text-blue-400 font-bold">{{ r.id }}</td>
+                                <td class="p-3 font-semibold text-white">{{ r.nombre }}</td>
+                                <td class="p-3 text-slate-300 font-mono">{{ r.cedula }}</td>
+                                <td class="p-3 text-slate-400">{{ r.fecha }}</td>
+                                <td class="p-3 text-emerald-400 font-bold font-mono">{{ r.hora }}</td>
+                                <td class="p-3 text-right">
+                                    <span class="inline-flex items-center gap-1 bg-emerald-500/10 text-emerald-400 text-[10px] px-2 py-0.5 rounded-md font-bold border border-emerald-500/20">
+                                        ✔ {{ r.estado }}
+                                    </span>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>
